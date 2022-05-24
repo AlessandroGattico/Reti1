@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
     int attempts;
     char target[5] = "";
     FILE *fp;
+    char *p;
 
     srand(time(NULL));
 
@@ -183,69 +184,77 @@ int main(int argc, char *argv[])
         strcpy(message, "");
 
         /* handle the new connection request  */
-        returnStatus = read(simpleChildSocket, buffer, sizeof(buffer));
-
-        if (returnStatus > 0)
+        while (attempts > 0)
         {
-            char a[LEN + 1];
+            returnStatus = read(simpleChildSocket, message, sizeof(message));
 
-            for (int j = 0; j < 4; ++j)
+            if (returnStatus > 0)
             {
-                a[j] = message[j];
-            }
+                p = strtok(message, " ");
 
-            a[LEN] = '\0';
-
-            if (strcmp("WORD", a) == 0)
-            {
-                int h = 0;
-                for (int i = 5; i < 10; i++)
+                if (strcmp("WORD", p) == 0)
                 {
-                    buffer[h] = message[i];
-                    h++;
+                    p = strtok(NULL, " ");
+
+                    strcpy(buffer, p);
+
+                    if (strlen(buffer) != 6 && strstr(buffer, " ") == 0)
+                    {
+                        close(simpleChildSocket);
+                    }
+                    else if (strcmp(target, buffer) == 0 && attempts)
+                    {
+                        strcpy(message, "OK PERFECT\n");
+
+                        attempts--;
+
+                        write(simpleChildSocket, message, strlen(message));
+
+                        strcpy(message, "");
+
+                        close(simpleChildSocket);
+                    }
+                    else
+                    {
+                        strcpy(message, "OK ");
+                        sprintf(message, "%d ", attempts);
+                        strcat(message, crea_risposta(&buffer[0], &target[0]));
+                        strcat(message, "\n");
+
+                        attempts--;
+
+                        write(simpleChildSocket, message, strlen(message));
+
+                        strcpy(message, "");
+                    }
                 }
-
-                if (strlen(buffer) != 6 && strcmp(&buffer[0], " ") == 0)
+                else if (strcmp("QUIT", a) == 0)
                 {
-                    strcpy(message, "ERROR\n");
-                }
-                else if (strcmp(target, buffer) == 0 && attempts)
-                {
-                    strcpy(message, "OK PERFECT\n");
-                    write(simpleChildSocket, message, strlen(message));
                     close(simpleChildSocket);
                 }
                 else
                 {
-                    strcpy(message, "OK ");
-                    sprintf(message, "%d ", attempts);
-                    strcat(message, crea_risposta(&buffer[0], &target[0]));
-                    strcat(message, "\n");
+                    strcpy(message, "ERR comando non valido\n");
+
                     write(simpleChildSocket, message, strlen(message));
+
+                    strcpy(message, "");
+
+                    close(simpleChildSocket);
                 }
-            }
-            else if (strcmp("QUIT", a) == 0)
-            {
-                close(simpleChildSocket);
+
             }
             else
             {
-                strcpy(message, "ERR condo non valido\n");
-                write(simpleChildSocket, message, strlen(message));
-                close(simpleChildSocket);
+                fprintf(stderr, "Return Status = %d \n", returnStatus);
             }
 
         }
-        else
-        {
-            fprintf(stderr, "Return Status = %d \n", returnStatus);
-        }
-        close(simpleChildSocket);
 
+        close(simpleChildSocket);
     }
 
     close(simpleSocket);
     return 0;
-
 }
 
