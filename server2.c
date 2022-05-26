@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <ctype.h>
 
 #define LEN 6
 #define W 50
@@ -13,6 +14,8 @@
 char words[W][LEN];
 char message[256];
 char appoggio[256];
+
+int tentativi;
 
 char *select_word(FILE *fp);
 
@@ -36,16 +39,19 @@ char *select_word(FILE *fp)
 
 char *crea_risposta(char *buffer, char *target)
 {
-    for (int j = 0; j < strlen(buffer); ++j)
+    for (int j = 0; j < strlen(buffer) - 1; ++j)
     {
-        if (&target[j] == &buffer[j])
+        if (target[j] == buffer[j])
         {
             appoggio[j] = '*';
         }
         else
         {
-            for (int k = 0; k < strlen(target) - 1; ++k)
+            printf("%s\n", appoggio);
+            for (int k = 0; k < strlen(target) - 1; k++)
             {
+                printf("%s\n", appoggio);
+
                 if (target[j] == buffer[k])
                 {
                     appoggio[j] = '+';
@@ -53,6 +59,11 @@ char *crea_risposta(char *buffer, char *target)
                 else
                 {
                     appoggio[j] = '-';
+                }
+
+                if (appoggio[j] == '+')
+                {
+                    k = strlen(target);
                 }
             }
         }
@@ -73,6 +84,7 @@ int main(int argc, char *argv[])
     char target[LEN] = "";
     FILE *fp;
     char *p;
+    int quit = 0;
 
     srand(time(NULL));
 
@@ -82,7 +94,7 @@ int main(int argc, char *argv[])
     }
     else if (2 == argc)
     {
-        attempts = 6;
+        tentativi = 6;
         fp = fopen("words.txt", "r");
 
         if (fp == NULL)
@@ -92,17 +104,16 @@ int main(int argc, char *argv[])
     }
     else if (3 == argc)
     {
-        attempts = atoi(argv[3]);
+        tentativi = atoi(argv[3]);
 
-        if (attempts > 10)
+        if (tentativi > 10)
         {
-            attempts = 10;
+            tentativi = 10;
         }
-        if (attempts < 6)
+        if (tentativi < 6)
         {
-            attempts = 6;
+            tentativi = 6;
         }
-
         fp = fopen("words.txt", "r");
 
         if (fp == NULL)
@@ -175,91 +186,101 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
+        attempts = tentativi;
+
         strcpy(target, select_word(fp));
         printf("%s\n", target);
 
-        strcpy(message, "OK ");
-        sprintf(message, "%d", attempts);
+        snprintf(message, sizeof(attempts), "OK %d", attempts);
         strcat(message, " Indovina la parola\n");
 
-        write(simpleChildSocket, message, strlen(message));
-        printf("inviato\n");
-        memset(message, '\0', sizeof(message));
+        printf("%s", message);
 
-        /* handle the new connection request  */
-        while (attempts > 0)
+        write(simpleChildSocket, message, strlen(message));
+
+        while (quit == 0)
         {
+            memset(buffer, '\0', sizeof(buffer));
+            memset(appoggio, '\0', sizeof(appoggio));
+            memset(message, '\0', sizeof(message));
             returnStatus = read(simpleChildSocket, message, sizeof(message));
-            //printf("%s", message);
 
             if (returnStatus > 0)
             {
-                //p = strtok(message, " ");
-
-                if (strstr("WORD", message) == 0)
+                if (strstr(message, "WORD") != NULL)
                 {
-                    //p = strtok(NULL, " ");
-
-                    sprintf(buffer, "%s", message + 5);
-                    //strcat(buffer, '\0');
-
-
-                    if (strlen(buffer) != 5 && strstr(buffer, " ") == 0)
+                    if (attempts > 0)
                     {
-                        close(simpleChildSocket);
-                    }
-                    else if (strcmp(target, buffer) == 0 && attempts > 0)
-                    {
-                        strcpy(message, "OK PERFECT\n");
+                        strcpy(buffer, message + 5);
+                        memset(message, '\0', sizeof(message));
+
+                        for (int i = 0; i < strlen(buffer) - 1; ++i)
+                        {
+                            if (!isalpha(buffer[i]))
+                            {
+                                memset(message, '\0', sizeof(message));
+                                strcpy(message, "ERR La parola contiene caratteri non validi\n");
+                                write(simpleChildSocket, message, strlen(message));
+                                close(simpleChildSocket);
+                            }
+                            else
+                            {
+                                message[i] = tolower(buffer[i]);
+                            }
+                        }
+                        if (strlen(buffer) != 6)
+                        {
+                            memset(message, '\0', sizeof(message));
+                            strcpy(message, "ERR La parola è più lunga di 5 caratteri\n");
+                            write(simpleChildSocket, message, strlen(message));
+                            close(simpleChildSocket);
+                        }
 
                         attempts--;
 
-                        write(simpleChildSocket, message, strlen(message));
+                        crea_risposta(buffer, target);
 
                         memset(message, '\0', sizeof(message));
 
-                        close(simpleChildSocket);
+                        if (strcmp(appoggio, target) == 0)
+                        {
+                            strcpy(message, "OK PERFECT Hai indovinato la parola!\n");
+                            write(simpleChildSocket, message, strlen(message));
+                            close(simpleChildSocket);
+                        }
+                        else
+                        {
+                            strcpy(message, "OK ");
+                            strcat(message, appoggio);
+                            write(simpleChildSocket, message, strlen(message));
+                            printf("%s\n", appoggio);
+                        }
                     }
                     else
                     {
-                        //p = strtok(buffer, " ");
-                        printf("%s\n", buffer);
-                        strcpy(message, "OK ");
-                        sprintf(message, "%d ", attempts);
-                        strcpy(appoggio, crea_risposta(buffer, target));
-                        strcat(message, appoggio);
-                        strcat(message, "\n");
-
-                        attempts--;
-
-                        write(simpleChildSocket, message, strlen(message));
-
-                        memset(message, '\0', sizeof(message));
-                        memset(appoggio, '\0', sizeof(appoggio));
-
+                        sprintf(appoggio, "END %d La parola era: %s\n", tentativi, target);
+                        write(simpleChildSocket, appoggio, strlen(appoggio));
+                        close(simpleChildSocket);
                     }
+                    //printf("%s", message + 5);
                 }
-                else if (strcmp("QUIT", p) == 0)
+                else if (strstr(message, "QUIT") != NULL)
                 {
+                    strcpy(appoggio, "QUIT Vai via così presto?");
+                    //printf("%s", message);
+                    write(simpleChildSocket, appoggio, strlen(appoggio));
                     close(simpleChildSocket);
                 }
-                else
-                {
-                    strcpy(message, "ERR comando non valido\n");
-
-                    write(simpleChildSocket, message, strlen(message));
-
-                    memset(message, '\0', sizeof(message));
-
-                    close(simpleChildSocket);
-                }
-
             }
-
+            else
+            {
+                quit = 1;
+            }
         }
 
         close(simpleChildSocket);
     }
+
     close(simpleSocket);
     return 0;
 }

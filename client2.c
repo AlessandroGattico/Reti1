@@ -55,79 +55,72 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    returnStatus = read(simpleSocket, messaggio, sizeof(messaggio));
+
+    if (returnStatus > 0)
+    {
+        printf("%s", messaggio + 4);
+        fgets(buffer, 249, stdin);
+        strcpy(appoggio, "WORD ");
+        strcat(appoggio, buffer);
+        write(simpleSocket, appoggio, strlen(appoggio));
+    }
+    else
+    {
+        close(simpleSocket);
+    }
+
     while (quit == 0)
     {
         returnStatus = read(simpleSocket, messaggio, sizeof(messaggio));
 
-        printf("letto\n");
-
         if (returnStatus > 0)
         {
-            int attempts = 0;
-
-            if (strstr(messaggio, "OK") == 0)
+            if (strstr(messaggio, "OK PERFECT") != NULL)
             {
-                sprintf(buffer, "%s", messaggio + 2);
+                printf("%s", messaggio + 10);
+                quit = 1;
+            }
+            else if (strstr(messaggio, "OK") != NULL)
+            {
+                printf("%s", messaggio + 4);
+                fgets(buffer, 249, stdin);
 
-                p = strtok(messaggio, " ");
-
-                attempts = atoi(p);
-
-                p = strtok(NULL, " ");
-
-
-                if (attempts > 0)
+                if (strcmp(buffer, "quit") == 0 || strcmp(buffer, "QUIT") == 0)
                 {
-                    printf("%s\n", buffer);
-                    memset(buffer, '\0', sizeof(buffer));
-
-                    scanf("%s", buffer);
-
-                    printf("ok\n");
-
-                    memset(messaggio, '\0', sizeof(messaggio));
-                    strcpy(messaggio, "WORD ");
-                    strcat(messaggio, buffer);
-                    strcat(messaggio, "\n");
-
-                    //strcpy(messaggio, buffer);
-
-                    printf("ok2\n");
-
-                    write(simpleSocket, messaggio, strlen(messaggio));
-                    printf("ok3\n");
-
-                    memset(messaggio, '\0', sizeof(messaggio));
+                    strcpy(appoggio, "QUIT");
+                    strcat(appoggio, '\0');
+                    write(simpleSocket, appoggio, strlen(appoggio));
                 }
                 else
                 {
-                    quit = 1;
+                    strcpy(appoggio, "WORD ");
+                    strcat(appoggio, buffer);
+
+                    write(simpleSocket, appoggio, strlen(appoggio));
+
+                    memset(messaggio, '\0', sizeof(messaggio));
+                    memset(buffer, '\0', sizeof(buffer));
+                    memset(appoggio, '\0', sizeof(appoggio));
                 }
             }
-            else if (strcmp(p, "QUIT") == 0)
+            else if (strstr(messaggio, "ERR") != NULL)
             {
-                break;
-            }
-            else if (strcmp(p, "END") == 0)
-            {
-                //p = strtok(NULL, " ");
-                //p = strtok(NULL, " ");
-                strcpy(buffer, messaggio + 6);
-
-                printf("%s\n", buffer);
-
-                memset(buffer, '\0', sizeof(buffer));
-
+                printf("%s", messaggio + 4);
                 quit = 1;
             }
-            else if (strcmp(p, "ERR") == 0)
+            else if (strstr(messaggio, "END") != NULL)
             {
-                //p = strtok(NULL, " ");
-                strcpy(buffer, messaggio + 4);
-
-                printf("%s\n", buffer);
-                memset(buffer, '\0', sizeof(buffer));
-
+                printf("%s", messaggio + 5);
+                quit = 1;
+            }
+            else if (strstr(messaggio, "QUIT") != NULL)
+            {
+                printf("%s", messaggio + 6);
+                quit = 1;
+            }
+            else
+            {
                 quit = 1;
             }
         }
