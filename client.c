@@ -55,39 +55,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    returnStatus = read(simpleSocket, messaggio, sizeof(messaggio));
-
-    if (returnStatus > 0)
-    {
-        printf("%s", messaggio + 4);
-        fgets(buffer, 249, stdin);
-
-        memset(appoggio, '\0', sizeof(appoggio));
-
-        if (strstr(buffer, "QUIT") != NULL)
-        {
-            strcpy(appoggio, "QUIT\n");
-            printf("QUIIII uno\n");
-
-            write(simpleSocket, appoggio, strlen(appoggio));
-        }
-        else
-        {
-            strcpy(appoggio, "WORD ");
-            strcat(appoggio, buffer);
-
-            write(simpleSocket, appoggio, strlen(appoggio));
-        }
-
-        memset(messaggio, '\0', sizeof(messaggio));
-        memset(buffer, '\0', sizeof(buffer));
-        memset(appoggio, '\0', sizeof(appoggio));
-    }
-    else
-    {
-        close(simpleSocket);
-    }
-
     while (quit == 0)
     {
         memset(messaggio, '\0', sizeof(messaggio));
@@ -115,9 +82,9 @@ int main(int argc, char *argv[])
                 if (strstr(buffer, "QUIT") != NULL)
                 {
                     strcpy(appoggio, "QUIT\n");
-                    //printf("QUIIIIIIIII\n");
 
                     write(simpleSocket, appoggio, strlen(appoggio));
+
                     returnStatus = read(simpleSocket, messaggio, sizeof(messaggio));
 
                     printf("%s", messaggio + 5);
@@ -139,18 +106,21 @@ int main(int argc, char *argv[])
             else if (strstr(messaggio, "ERR") != NULL)
             {
                 printf("%s\n", messaggio + 4);
+
                 quit = 1;
             }
             else if (strstr(messaggio, "END") != NULL)
             {
                 printf("%s\n", messaggio + 6);
+
                 quit = 1;
-            }/*
+            }
             else if (strstr(messaggio, "QUIT") != NULL)
             {
                 printf("%s\n", messaggio + 5);
+
                 quit = 1;
-            }*/
+            }
             else
             {
                 quit = 1;

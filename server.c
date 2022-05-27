@@ -48,11 +48,8 @@ char *crea_risposta(char *buffer, char *target)
         }
         else
         {
-            //printf("%s\n", appoggio);
             for (int k = 0; k < strlen(target); k++)
             {
-                //printf("%s\n", appoggio);
-
                 if (target[j] == buffer[k])
                 {
                     appoggio[j] = '+';
@@ -71,7 +68,6 @@ char *crea_risposta(char *buffer, char *target)
     }
 
     appoggio[j + 1] = '\n';
-    //strcat(&appoggio[strlen(appoggio) + 1], '\0');
 
     return appoggio;
 }
@@ -105,7 +101,7 @@ int main(int argc, char *argv[])
     }
     else if (3 == argc)
     {
-        tentativi = atoi(argv[3]);
+        tentativi = atoi(argv[2]);
 
         if (tentativi > 10)
         {
@@ -115,6 +111,7 @@ int main(int argc, char *argv[])
         {
             tentativi = 6;
         }
+
         fp = fopen("words.txt", "r");
 
         if (fp == NULL)
@@ -177,8 +174,6 @@ int main(int argc, char *argv[])
         int clientNameLength = sizeof(clientName);
         int quit = 0;
 
-        /* wait here */
-
         simpleChildSocket = accept(simpleSocket, (struct sockaddr *) &clientName, &clientNameLength);
 
         if (simpleChildSocket == -1)
@@ -193,10 +188,8 @@ int main(int argc, char *argv[])
         strcpy(target, select_word(fp));
         printf("%s\n", target);
 
-        snprintf(message, sizeof(attempts), "OK %d", attempts);
-        strcat(message, " Indovina la parola\n");
-
-        printf("%s", message);
+        sprintf(message, "OK %d ", attempts);
+        strcat(message, "Indovina la parola");
 
         write(simpleChildSocket, message, strlen(message));
 
@@ -214,10 +207,10 @@ int main(int argc, char *argv[])
 
                 if (strstr(message, "QUIT") != NULL)
                 {
-                    strcpy(appoggio, "QUIT Vai via così presto?");
-                    //printf("%s", message);
+                    strcpy(appoggio, "QUIT Vai via così presto?\n");
+
                     write(simpleChildSocket, appoggio, strlen(appoggio));
-                    //close(simpleChildSocket);
+
                     quit = 1;
                 }
                 else if (strstr(message, "WORD") != NULL)
@@ -232,8 +225,9 @@ int main(int argc, char *argv[])
                             if (!isalpha(buffer[i]))
                             {
                                 strcpy(message, "ERR La parola contiene caratteri non validi\n");
+
                                 write(simpleChildSocket, message, strlen(message));
-                                //close(simpleChildSocket);
+
                                 quit = 1;
                             }
                             else
@@ -244,9 +238,10 @@ int main(int argc, char *argv[])
                         if (strlen(buffer) != 6)
                         {
                             memset(message, '\0', sizeof(message));
-                            strcpy(message, "ERR La parola è più lunga di 5 caratteri\n");
+                            strcpy(message, "ERR La parola deve essere di 5 caratteri\n");
+
                             write(simpleChildSocket, message, strlen(message));
-                            //close(simpleChildSocket);
+
                             quit = 1;
                         }
 
@@ -259,26 +254,26 @@ int main(int argc, char *argv[])
                         if (strstr(appoggio, "*****") != NULL)
                         {
                             strcpy(message, "OK PERFECT Hai indovinato la parola!\n");
+
                             write(simpleChildSocket, message, strlen(message));
-                            //close(simpleChildSocket);
+
                             quit = 1;
                         }
                         else
                         {
-                            sprintf(message, "OK %d ", attempts);
-                            strcat(message, appoggio);
+                            sprintf(message, "OK %d %s", attempts, appoggio);
+
                             write(simpleChildSocket, message, strlen(message));
-                            printf("%s\n", appoggio);
                         }
                     }
                     else
                     {
                         sprintf(appoggio, "END %d La parola era: %s\n", tentativi, target);
+
                         write(simpleChildSocket, appoggio, strlen(appoggio));
-                        //close(simpleChildSocket);
+
                         quit = 1;
                     }
-                    //printf("%s", message + 5);
                 }
 
             }
