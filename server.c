@@ -186,7 +186,6 @@ int main(int argc, char *argv[])
         attempts = tentativi;
 
         strcpy(target, select_word(fp));
-        printf("%s\n", target);
 
         sprintf(message, "OK %d ", attempts);
         strcat(message, "Indovina la parola");
@@ -203,8 +202,6 @@ int main(int argc, char *argv[])
 
             if (returnStatus > 0)
             {
-                printf("%s\n", message);
-
                 if (strstr(message, "QUIT") != NULL)
                 {
                     strcpy(appoggio, "QUIT Vai via così presto?\n");
