@@ -50,7 +50,7 @@ char *crea_risposta(char *buffer, char *target)
         {
             for (int k = 0; k < strlen(target); k++)
             {
-                if (target[j] == buffer[k])
+                if (buffer[j] == target[k])
                 {
                     appoggio[j] = '+';
                 }
