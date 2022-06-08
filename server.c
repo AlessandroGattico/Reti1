@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 
         strcpy(target, select_word(fp));
 
-        sprintf(message, "OK %d Indovina la parola\n", attempts);
+        sprintf(message, "OK %d Ciao!\nIndovina la parola\n", attempts);
 
         write(simpleChildSocket, message, strlen(message));
 
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
             {
                 if (strstr(message, "QUIT") != NULL)
                 {
-                    strcpy(appoggio, "QUIT Vai via così presto?\n");
+                    sprintf(appoggio, "QUIT Vai via così presto?\nLa parola era: '%s'\n", target);
 
                     write(simpleChildSocket, appoggio, strlen(appoggio));
 
