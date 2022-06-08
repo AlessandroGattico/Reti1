@@ -14,11 +14,9 @@
 char words[W][LEN];
 char message[256];
 char appoggio[256];
-
 int tentativi;
 
 char *select_word(FILE *fp);
-
 char *crea_risposta(char *buffer, char *target);
 
 char *select_word(FILE *fp)
@@ -40,6 +38,8 @@ char *select_word(FILE *fp)
 char *crea_risposta(char *buffer, char *target)
 {
     int j = 0;
+    int k = 0;
+
     for (j = 0; j < strlen(buffer); ++j)
     {
         if (target[j] == buffer[j])
@@ -48,7 +48,7 @@ char *crea_risposta(char *buffer, char *target)
         }
         else
         {
-            for (int k = 0; k < strlen(target); k++)
+            for (k = 0; k < strlen(target); k++)
             {
                 if (buffer[j] == target[k])
                 {
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     {
         exit(1);
     }
-    else if (2 == argc)
+    else if (argc == 2)
     {
         tentativi = 6;
         fp = fopen("words.txt", "r");
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
     }
-    else if (3 == argc)
+    else if (argc == 3)
     {
         tentativi = atoi(argv[2]);
 
@@ -166,13 +166,11 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-
     while (1)
     {
         struct sockaddr_in clientName = {0};
         int simpleChildSocket = 0;
         int clientNameLength = sizeof(clientName);
-        int quit = 0;
 
         simpleChildSocket = accept(simpleSocket, (struct sockaddr *) &clientName, &clientNameLength);
 
@@ -187,12 +185,11 @@ int main(int argc, char *argv[])
 
         strcpy(target, select_word(fp));
 
-        sprintf(message, "OK %d ", attempts);
-        strcat(message, "Indovina la parola");
+        sprintf(message, "OK %d Indovina la parola\n", attempts);
 
         write(simpleChildSocket, message, strlen(message));
 
-        while (quit == 0)
+        while (1)
         {
             memset(buffer, '\0', sizeof(buffer));
             memset(appoggio, '\0', sizeof(appoggio));
@@ -208,7 +205,7 @@ int main(int argc, char *argv[])
 
                     write(simpleChildSocket, appoggio, strlen(appoggio));
 
-                    quit = 1;
+                    break;
                 }
                 else if (strstr(message, "WORD") != NULL)
                 {
@@ -225,7 +222,7 @@ int main(int argc, char *argv[])
 
                                 write(simpleChildSocket, message, strlen(message));
 
-                                quit = 1;
+                                break;
                             }
                             else
                             {
@@ -239,7 +236,7 @@ int main(int argc, char *argv[])
 
                             write(simpleChildSocket, message, strlen(message));
 
-                            quit = 1;
+                            break;
                         }
 
                         attempts--;
@@ -254,11 +251,11 @@ int main(int argc, char *argv[])
 
                             write(simpleChildSocket, message, strlen(message));
 
-                            quit = 1;
+                            break;
                         }
                         else
                         {
-                            sprintf(message, "OK %d %s", attempts, appoggio);
+                            sprintf(message, "OK %d %s\n", attempts, appoggio);
 
                             write(simpleChildSocket, message, strlen(message));
                         }
@@ -269,14 +266,14 @@ int main(int argc, char *argv[])
 
                         write(simpleChildSocket, appoggio, strlen(appoggio));
 
-                        quit = 1;
+                        break;
                     }
                 }
 
             }
             else
             {
-                quit = 1;
+                break;
             }
         }
 

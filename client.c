@@ -7,20 +7,18 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-char messaggio[256];
+char message[256];
 char buffer[256];
 char appoggio[256];
 
 int main(int argc, char *argv[])
 {
-
     int simpleSocket = 0;
     int simplePort = 0;
     int returnStatus = 0;
     struct sockaddr_in simpleServer;
-    int quit = 0;
 
-    if (3 != argc)
+    if (argc != 3)
     {
         exit(1);
     }
@@ -55,29 +53,30 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    while (quit == 0)
+    while (1)
     {
-        memset(messaggio, '\0', sizeof(messaggio));
+        memset(message, '\0', sizeof(message));
         memset(appoggio, '\0', sizeof(appoggio));
+        memset(buffer, '\0', sizeof(buffer));
 
-        returnStatus = read(simpleSocket, messaggio, sizeof(messaggio));
+        returnStatus = read(simpleSocket, message, sizeof(message));
 
         if (returnStatus > 0)
         {
-            if (strstr(messaggio, "OK PERFECT") != NULL)
+            if (strstr(message, "OK PERFECT") != NULL)
             {
-                printf("%s\n", messaggio + 11);
-                quit = 1;
+                printf("%s", message + 11);
+
+                break;
             }
-            else if (strstr(messaggio, "OK") != NULL)
+            else if (strstr(message, "OK") != NULL)
             {
                 memset(buffer, '\0', sizeof(buffer));
 
-                printf("%s\n", messaggio + 5);
+                printf("%s", message + 5);
                 fgets(buffer, 249, stdin);
 
-                memset(messaggio, '\0', sizeof(messaggio));
-                memset(appoggio, '\0', sizeof(appoggio));
+                memset(message, '\0', sizeof(message));
 
                 if (strstr(buffer, "QUIT") != NULL)
                 {
@@ -85,11 +84,14 @@ int main(int argc, char *argv[])
 
                     write(simpleSocket, appoggio, strlen(appoggio));
 
-                    returnStatus = read(simpleSocket, messaggio, sizeof(messaggio));
+                    returnStatus = read(simpleSocket, message, sizeof(message));
 
-                    printf("%s", messaggio + 5);
+                    if (returnStatus > 0)
+                    {
+                        printf("%s", message + 5);
+                    }
 
-                    quit = 1;
+                    break;
                 }
                 else
                 {
@@ -97,38 +99,34 @@ int main(int argc, char *argv[])
                     strcat(appoggio, buffer);
 
                     write(simpleSocket, appoggio, strlen(appoggio));
-
-                    memset(messaggio, '\0', sizeof(messaggio));
-                    memset(buffer, '\0', sizeof(buffer));
-                    memset(appoggio, '\0', sizeof(appoggio));
                 }
             }
-            else if (strstr(messaggio, "ERR") != NULL)
+            else if (strstr(message, "ERR") != NULL)
             {
-                printf("%s\n", messaggio + 4);
+                printf("%s", message + 4);
 
-                quit = 1;
+                break;
             }
-            else if (strstr(messaggio, "END") != NULL)
+            else if (strstr(message, "END") != NULL)
             {
-                printf("%s\n", messaggio + 6);
+                printf("%s", message + 6);
 
-                quit = 1;
+                break;
             }
-            else if (strstr(messaggio, "QUIT") != NULL)
+            else if (strstr(message, "QUIT") != NULL)
             {
-                printf("%s\n", messaggio + 5);
+                printf("%s", message + 5);
 
-                quit = 1;
+                break;
             }
             else
             {
-                quit = 1;
+                break;
             }
         }
         else
         {
-            quit = 1;
+            break;
         }
     }
 
