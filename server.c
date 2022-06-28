@@ -14,7 +14,6 @@
 char words[W][LEN];
 char message[256];
 char appoggio[256];
-int tentativi;
 
 char *select_word(FILE *fp);
 char *crea_risposta(char *buffer, char *target);
@@ -79,7 +78,8 @@ int main(int argc, char *argv[])
     int returnStatus = 0;
     struct sockaddr_in simpleServer;
     char buffer[256] = "";
-    int attempts;
+    int attempts = 0;
+    int tentativi = 0;
     char target[LEN] = "";
     FILE *fp;
 
